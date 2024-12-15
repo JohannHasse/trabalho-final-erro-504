@@ -1,0 +1,237 @@
+---
+title: "Relatório - Erro 504"
+output: html_document
+date: "2024-12-15"
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Relatório de Análise de Dados de Carros Usados
+
+## Introdução
+
+Neste relatório, apresentamos uma análise detalhada de um conjunto de
+dados de carros usados com o objetivo de entender a distribuição dos
+dados e os principais fatores que influenciam o preço dos veículos. O
+dataset utilizado contém informações sobre vários aspectos dos carros,
+como o ano de fabricação, o tipo de transmissão (manual ou automático),
+preço, marca e localização (estado). Através da construção de um
+aplicativo interativo Shiny com cinco páginas, buscamos proporcionar uma
+exploração dinâmica dos dados, permitindo ao usuário realizar diferentes
+tipos de análise estatística, visualização e previsão.
+
+O problema central a ser analisado é como as variáveis do dataset, como
+ano de fabricação, tipo de transmissão e marca, impactam o valor de
+mercado dos carros usados.
+
+## Materiais e Métodos
+
+A fonte de dados utilizada neste estudo foi o "Used Cars Dataset". Este
+conjunto de dados contém informações sobre carros usados listados para
+venda, incluindo variáveis como o preço, quilometragem, tipo de
+transmissão (manual ou automática), marca e o estado onde o carro está
+localizado.
+
+## Pré-processamento dos Dados
+
+Antes de iniciar a análise, os dados passaram por um processo de
+pré-processamento que envolveu as seguintes etapas:
+
+-   Remoção de valores ausentes .
+
+-   Conversão de variáveis de texto em fatores, como o tipo de
+    transmissão.
+
+-   Remoção de algumas variáveis que eram irrelevantes.
+
+-   Remoção de outliers
+
+```         
+banco_filtrado <- banco_de_dados %>%
+  select(variaveis, que, iremos, usar) %>%
+  filter(!is.na(variavel)) # Por exemplo, para remover os elemtos NA's.
+```
+
+## Técnicas Estatísticas Aplicadas
+
+Para a construção do Shiny App com cinco páginas interativas, foram
+utilizadas as seguintes técnicas e ferramentas:
+
+-   Mapas de Distribuição: Utilizamos a biblioteca leaflet para criar um
+    mapa interativo mostrando a distribuição dos carros pelos estados.
+    Isso permitiu observar visualmente as áreas com maior concentração
+    de veículos de uma certa determinada marca.
+
+```         
+leaflet(region_data) %>%
+      addTiles() %>%
+      addCircleMarkers(
+        ~long, ~lat,
+        radius = ~sqrt(count) * 2,  # O tamanho do círculo reflete a quantidade de veículos
+        color = "blue",
+        fillColor = "lightblue",
+        fillOpacity = 0.7,
+        popup = ~region,
+        layerId = ~region
+```
+
+-   Análise Estatística, Boxplots, entre outros: Foram gerados boxplots,
+    mapas de calor, violin plots e gráficos de dispersão utilizando
+    ggplot2 para comparar as distribuições de variáveis como preço,
+    quilometragem e ano de fabricação.
+
+```         
+
+ggplot(data, aes(x = reorder(condition, price, FUN = median), y = price)) +
+        geom_boxplot(outlier.shape = NA) +
+        labs(
+          title = "Distribuição de Preço por Condição",
+          x = "Condição do Veículo",
+          y = "Preço ($)"
+        )
+```
+
+-   Regressão Linear Múltipla: Foi realizada uma regressão linear
+    múltipla para prevero preço dos carros com base em variáveis como
+    quilometragem, Fabricante, e tipo de transmissão. Também foi feito
+    uma regressão linear que é aplicada para observar a relação entre o
+    ano do carro e seu preço, ajustando uma linha de tendência aos
+    dados. A modelagem foi feita utilizando a função lm() do R.
+
+```         
+train(
+        price ~ year + manufacturer + condition + cylinders_n + title_status + type + odometer,
+        data = sampled_data,
+        method = "lm",
+        trControl = tr_control,
+        preProcess = c("center", "scale")
+      )
+```
+
+## Resultados
+
+### Análise de Preço de Carros Usados
+
+A primeira página vai proporcionar ao usuário uma análise interativa do
+mercado dos carros usados, permitindo que ele explore a relação entre o
+preço dos carros e o ano de fabricação em estados distintos ou em um
+conglomerádo de estados e observe como uma tendência nos preços é
+formada. Uma regressão linear é aplicada para observar relações entre o
+ano do carro e seu preço e, automaticamente, a página ajusta uma linha
+de tendência aos dados.Vendo no gráfico, podemos ver que há uma elevação
+de preço ao decorer dos anos,independente do estado.
+
+### Mapa Interativo
+
+A página que apresenta um mapa com algumas bolas azuis é a página
+referente a força das marcas por região. Conforme você seleciona os
+filtros de ano, combustível, transmissão e cilindragem, o usuário
+consegue visualizar quais as marcas são as mais fortes ou já estiveram
+no seu auge caso seja de seu interesse visualizar os carros em épocas
+mais antigas. Ao selecionar uma das bolas azuis referentes às regiões
+dos Estados Unidos, vai aparecer para o usuário um gráfico de barras com
+o número de carros de cada marca. É interessante para o usuário que
+deseja acompanhar quais marcas são mais presentes dentre as regiões e
+também quais marcas são mais fortes dependendo do filtro, como por
+exemplo qual a marca mais forte para carros elétricos na Flórida.
+
+### Correlação das variáveis
+
+A página voltada a correlação das variáveis trabalha tanto com as
+variáveis númericas quanto com as categóricas. A primeira aba mostra um
+mapa de calor, relacionando o quão lineares as variáveis númericas
+(price, year, odometer) são. A segunda aba apresenta diferentes
+boxplots, que podem ser filtrados pelo usuário para avaliar o quanto a
+variável de condição afeta a variável preço. Com os filtros de
+fabricante e combustível, o usuário consegue comparar os preços de
+diferentes marcas e tipos de combustível e verificar como essa variável
+afeta o preço junto da condição do carro. A terceira aba mostra por meio
+de gráficos de violino a variação do preço por tipo de combustível,
+junto com a densidade de carros pelo preço. A última aba é uma
+visualização da relação entre preço e quilometragem, buscando saber se
+conforme maior a quilometragem, menor o preço. Para melhorar a
+visualização e procurar diferentes informações, o filtro pode ser
+selecionado por fabricante e tipo de combustível, caso queira comparar
+se o preço de uma marca abaixa tanto quanto outra marca conforme a
+quilometragem aumenta, por exemplo.
+
+### Página 4: Análise de Carros Interativa
+
+Essa página vai ser dividida em três partes, uma para cada gráfico que é
+gerado. A primeira aba(Preço vs Quilometragem) busca analisar a relação
+entre o preço e a quilometragem dos carros, com o tipo de combustível
+como variável adicional. O gráfico de dispersão permite visualizar como
+esses fatores se inter-relacionam. Em seguida, a segunda aba (Proporção
+de Carros por Ano) tem como foco a distribuição dos carros por ano de
+fabricação. Através de um gráfico de linha, é possível analisar a
+proporção de carros disponíveis para cada ano e como esses dados se
+distribuem ao longo do tempo. Por fim, a terceira aba (Tendência de
+Preço ao Longo dos Anos) foca em analisar a evolução do preço médio dos
+carros ao longo dos anos. O gráfico de linha permite visualizar como os
+preços dos carros variaram ano a ano.
+
+### Página 5: Predição de Preço de Carros
+
+Essa página tenta prever o valor de um carro que o usuario montar,
+utilizando o banco de dados "used cars dataset" como base. Na interface
+é possivel escolher entre 3 modelos, sendo eles, Regressão Linear
+multipla, Random Forest e XGBoost.
+
+Os três modelos utilizam as variaveis, "Fabricante", "Ano", "Condição",
+"Cilindros", "Estado de Titulo", "tipo" e "Odometro" para treinamento.
+Após escolher o modelo, o usuario pode selecionar valores e categorias
+para as variaveis e ter uma previsão de preço do seu input. O número de
+observações usadas para o treinamento também pode ser escolhido, para
+melhorar o desempenho. Por ultimo, a pagina conta com uma tabela que
+pode ser preenchida com os dados anteriores utilizando o botão "save", e
+posteriormente limpa com um segundo botão.
+
+## Discussão
+
+Os resultados apresentados nas páginas do Shiny App fornecem uma visão
+abrangente sobre o mercado de carros usados. O modelo de regressão
+linear múltipla mostra uma relação significativa entre quilometragem,
+Fabricante e tipo de transmissão, entre outras coisas, com o preço dos
+carros. Isso facilita e auxilia o usuário a ter uma noção de preço com
+base nos filtros selecionados. Caso ele deseja saber quanto irá pagar em
+um carro da Ford, numa condição boa, com 6 cilindros, que funciona a
+gasolina, transmissão automática vai saber que irá pagar algo em torno
+de \$ 17569.16.
+
+A análise da distribuição dos carros pelos estados e a proporção de
+carros manuais e automáticos ao longo dos anos oferece insights valiosos
+sobre tendências e preferências regionais, além de refletir mudanças no
+comportamento do consumidor. Podemos reparar o quanto tem aumentado o
+uso de carros ou diminuído em cada estado, a tendência dos carros pelo
+seu valor ou pela condição dele. Verificar se o passar dos anos mostra
+uma ascenção de outras marcas ou a consolidação de freguesias, que
+auxiliam as marcas para onde elas podem investir.
+
+Vendo as Tendências de Preço ao longo dos Anos, também podemos retirar
+informações valiosas que tem potencial de ajudar tanto consumidores
+comuns que só buscam um carro barato, quanto para pessoas mais
+interessadas na área ou até mesmo revendedoras. Um exemplo de um insight
+interessante desse gráfico é que, os carros dos anos 1976 até 2010 tem
+relativamente um preço e uma quilometragem mais baixo, o que faz deles
+serem carros bem vistos para que quer qualidade e preço baixo.
+
+Quanto ao gráfico de barras e a tabela de transmissão é essencial para
+observarmos como a troca de transmissão tem acontecido e verificar se
+diferentes marcas e diferentes combustíveis tendem a ter uma clientela
+em uma marca específica ou uma transmissão específica, como por exemplo,
+se os carros híbridos normalmente são de uma marca específica e se
+tendem a ser automáticos ao invés de manuais.
+
+## Conclusão
+
+Este relatório demonstrou como é possível utilizar ferramentas
+interativas como o Shiny App para explorar e analisar dados de carros
+usados. Embora a análise tenha sido útil para entender padrões gerais, o
+estudo pode ser expandido para incluir mais variáveis e técnicas de
+modelagem mais avançadas. O uso de aprendizado de máquina, como árvores
+de decisão ou redes neurais, pode melhorar a precisão das previsões de
+preço.
+
+
+
